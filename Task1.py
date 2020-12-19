@@ -62,7 +62,7 @@ df.drop(df[df.Date >= end].index, inplace=True)
 df.reset_index(drop=True, inplace=True)
 
 print(df)
-print(df)
+
 
 
 
