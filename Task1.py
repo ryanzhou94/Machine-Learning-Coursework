@@ -28,7 +28,7 @@ CHLA = sheets[0]
 TEMPERATURE = sheets[1]
 TOTALP = sheets[2]
 
-print([column for column in CHLA])
+# print([column for column in CHLA])
 # ['MIDAS', 'Lake', 'Town', 'Station', 'Date', 'Depth', 'CHLA （mg/L）']
 # ['MIDAS', 'LAKE', 'Town(s)', 'STATION', 'Date', 'DEPTH', 'TEMPERATURE（Centrigrade）']
 # ['MIDAS', 'Lake', 'Town(s)', 'Station', 'Date', 'Depth', 'Total P （mg/L）']
@@ -49,21 +49,24 @@ df = CHLA.loc[:, ['Date', 'Depth', 'CHLA （mg/L）']]
 # 609 2013-08-15    7.0       0.0150
 
 
-# Select an appropriate depth(7) by dropping irrelevant depths
+# Step3: Select one depth by dropping irrelevant depths
 df.drop(df[df.Depth != 7].index, inplace=True)
 df.reset_index(drop=True, inplace=True)
 
-# Select an appropriate time period by dropping irrelevant years
-# Analyzing three sheets, 1998-2013 is an appropriate time period
+# Step4.1: Select valid year (1998-2013) by dropping irrelevant years
 start = pd.to_datetime('1998-5-1')
 end = pd.to_datetime('2013-11-1')
-df.drop(df[df.Date < start].index, inplace=True)
-df.drop(df[df.Date >= end].index, inplace=True)
+df.drop(df[(df.Date < start) & (df.Date >= end)].index, inplace=True)
+df.reset_index(drop=True, inplace=True)
+# Step4.2: Select valid month (May-October) by dropping irrelevant months
+valid_month = [5, 6, 7, 8, 9, 10]
+for index, date in enumerate(df.Date):
+    if date.month not in valid_month:
+        df.drop(index, inplace=True)
 df.reset_index(drop=True, inplace=True)
 
-print(df)
 
-
+# Step5: Calculate mean value for each month
 
 
 
