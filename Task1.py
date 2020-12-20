@@ -19,5 +19,6 @@ TOTALP = sheets[2]      # target_name = 'Total P （mg/L）'
 
 
 cleaned_sheet = clean(sheet=CHLA)
+print(cleaned_sheet)
 df = CompleteByMean(cleaned_sheet)
 

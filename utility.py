@@ -50,7 +50,7 @@ def clean(sheet):
     # if the first a few months are missing,
     # add NaN to the list
     for i in range (Month - 5):
-        new_target_list.append(-1)
+        new_target_list.append(np.nan)
     # Iterate the dataframe
     for tup in df.itertuples():
         index = tup[0]
@@ -77,12 +77,12 @@ def clean(sheet):
             if Year == year:
                 if month_delta != 1:
                     for i in range(month_delta - 1):
-                        new_target_list.append(-1)
+                        new_target_list.append(np.nan)
             else:
                 # different year
                 if (month_delta + 5) != 0:
                     for i in range(month_delta + 5):
-                        new_target_list.append(-1)
+                        new_target_list.append(np.nan)
             # new piece of data
             Year = year
             Month = month

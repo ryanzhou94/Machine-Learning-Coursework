@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import math
 
 def CompleteByMean(df):
     # Go through the whole df and find missing month
@@ -9,12 +10,12 @@ def CompleteByMean(df):
         value = getMonthValue(df, date)
         # new_target_list.append(getMonthValue(df, date))
         df.iloc[tup[0], 2] = value
-
+    return df
 
 def getMonthValue(df, date):
     result = np.nan
     # print(date)
-    if df[df['Date'] == date].iloc[0, 2] != -1:
+    if math.isnan(df[df['Date'] == date].iloc[0, 2]) == False:
         # the result is not NaN, simply return the result
         result = df[df['Date'] == date].iloc[0, 2]
     else:
@@ -33,12 +34,12 @@ def getMonthValue(df, date):
             # use previous month and post month
             pre_date = constructDate(date.year, date.month-1)
             post_date = constructDate(date.year, date.month+1)
-            if (df[df['Date'] == pre_date].iloc[0, 2] == -1):
+            if (math.isnan(df[df['Date'] == pre_date].iloc[0, 2]) == True):
                 # if the previous month is -1(empty), use two post months
                 post1 = getMonthValue(df, constructDate(date.year, date.month+1))
                 post2 = getMonthValue(df, constructDate(date.year, date.month+2))
                 result = post1 * 2 - post2
-            elif (df[df['Date'] == post_date].iloc[0, 2] == -1):
+            elif (math.isnan(df[df['Date'] == post_date].iloc[0, 2]) == True):
                 # if the post month is -1(empty), use two previous months
                 pre1 = getMonthValue(df, constructDate(date.year, date.month-1))
                 pre2 = getMonthValue(df, constructDate(date.year, date.month-2))
