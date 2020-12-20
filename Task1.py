@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from utility import clean
 from MeanValue import CompleteByMean
+from KNN import CompleteByKNN
 
 pd.set_option('display.max_rows',1000)
 
@@ -18,7 +19,7 @@ TEMPERATURE = sheets[1] # target_name = 'TEMPERATURE（Centrigrade）'
 TOTALP = sheets[2]      # target_name = 'Total P （mg/L）'
 
 
-cleaned_sheet = clean(sheet=CHLA)
-print(cleaned_sheet)
-df = CompleteByMean(cleaned_sheet)
+cleaned_sheet = clean(sheet=TEMPERATURE)
+# df = CompleteByMean(cleaned_sheet)
+# df = CompleteByKNN(cleaned_sheet)
 
