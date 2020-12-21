@@ -3,14 +3,17 @@ import numpy as np
 import math
 
 def CompleteByMean(df):
+    df2 = df.copy()
     # Go through the whole df and find missing month
     new_target_list = []
-    for tup in df.itertuples():
+    for tup in df2.itertuples():
         date = constructDate(tup[1].year, tup[1].month)
-        value = getMonthValue(df, date)
+        value = getMonthValue(df2, date)
         # new_target_list.append(getMonthValue(df, date))
-        df.iloc[tup[0], 2] = value
-    return df
+        df2.iloc[tup[0], 2] = value
+    df2 = pd.DataFrame({"MIDAS":5548, "Lake":"China Lake", "Town":"China, Vassalboro", "Station":1,
+                       "Date":df2['Date'], "Depth":7, df2.columns.values[2]:df2.iloc[:, 2]})
+    return df2
 
 def getMonthValue(df, date):
     result = np.nan

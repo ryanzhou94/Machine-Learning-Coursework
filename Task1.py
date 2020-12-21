@@ -1,11 +1,10 @@
 import pandas as pd
-import numpy as np
 from utility import clean
-from MeanValue import CompleteByMean
-from KNN import CompleteByKNN
+from Task1Methods.MeanValue import CompleteByMean
+from Task1Methods.KNN import CompleteByKNN
 
 pd.set_option('display.max_rows',1000)
-
+pd.set_option('display.max_columns',1000)
 
 # Open 'China Lake.xlsx' and read 3 sheets
 file_path = 'China Lake.xlsx'
@@ -19,7 +18,33 @@ TEMPERATURE = sheets[1] # target_name = 'TEMPERATURE（Centrigrade）'
 TOTALP = sheets[2]      # target_name = 'Total P （mg/L）'
 
 
-cleaned_sheet = clean(sheet=TEMPERATURE)
-# df = CompleteByMean(cleaned_sheet)
-# df = CompleteByKNN(cleaned_sheet)
+cleaned_CHLA = clean(df=CHLA)
+cleaned_TEMPERATURE = clean(df=TEMPERATURE)
+cleaned_TOTALP = clean(df=TOTALP)
+
+
+# complete missing data by using 'Mean Value'
+complete_CHLA_Mean = CompleteByMean(cleaned_CHLA)
+complete_TEMPERATURE_Mean= CompleteByMean(cleaned_TEMPERATURE)
+complete_TOTALP_Mean = CompleteByMean(cleaned_TOTALP)
+
+# complete missing data by using 'KNN'
+complete_CHLA_KNN = CompleteByKNN(cleaned_CHLA)
+complete_TEMPERATURE_KNN = CompleteByKNN(cleaned_TEMPERATURE)
+complete_TOTALP_KNN = CompleteByKNN(cleaned_TOTALP)
+
+# concat three sheets
+df_Mean = pd.DataFrame({"MIDAS":5448, "Lake":"China Lake", "Town":"China, Vassalboro", "Station":1,
+                       "Date":complete_CHLA_Mean['Date'].dt.date, "Depth":7, "CHLA (mg/L)":complete_CHLA_Mean.iloc[:, 6],
+                  "TEMPERATURE (Centrigrade)":complete_TEMPERATURE_Mean.iloc[:, 6],
+                   "Total P (mg/L)":complete_TOTALP_Mean.iloc[:, 6]})
+
+df_KNN = pd.DataFrame({"MIDAS":5448, "Lake":"China Lake", "Town":"China, Vassalboro", "Station":1,
+                       "Date":complete_CHLA_KNN['Date'].dt.date, "Depth":7, "CHLA (mg/L)":complete_CHLA_KNN.iloc[:, 6],
+                  "TEMPERATURE (Centrigrade)":complete_TEMPERATURE_KNN.iloc[:, 6],
+                   "Total P (mg/L)":complete_TOTALP_KNN.iloc[:, 6]})
+
+# save the excel file
+df_Mean.to_excel("China Lake_Mean.xlsx", index=False)
+df_KNN.to_excel("China Lake_KNN.xlsx", index=False)
 

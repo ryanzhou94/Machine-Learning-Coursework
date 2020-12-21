@@ -1,17 +1,17 @@
 import pandas as pd
 import numpy as np
 
-def clean(sheet):
+def clean(df):
     # Change column name
-    target_name = sheet.columns.values[6]
+    target_name = df.columns.values[6]
     if target_name == 'TEMPERATURE（Centrigrade）':
-        sheet.rename(columns={'DEPTH':'Depth'}, inplace=True)
+        df.rename(columns={'DEPTH':'Depth'}, inplace=True)
 
-    # Processs sheet:
+    # Processs df:
     # We will only process the date, depth, target item (CHLA, TEMPERATUR and Total P),
     # therefor, we drop irrelevant items, which are MIDAS, LAKE, Town(s) and STATION
     # With the reduced amount of data, the program will process data much faster
-    df = sheet.loc[:, ['Date', 'Depth', target_name]]
+    df = df.loc[:, ['Date', 'Depth', target_name]]
 
     # Select one depth by dropping irrelevant depths
     df.drop(df[df.Depth != 7].index, inplace=True)
@@ -104,6 +104,6 @@ def clean(sheet):
     # print(len(new_target_list))
 
     # create a new DataFrame
-    new_sheet = pd.DataFrame({'Date': empty_date_list, 'Depth': 7, target_name: new_target_list})
+    new_df = pd.DataFrame({'Date': empty_date_list, 'Depth': 7, target_name: new_target_list})
 
-    return new_sheet
+    return new_df
