@@ -1,27 +1,62 @@
 import pandas as pd
 import numpy as np
 
+# clean sheets: 1. drop irrelevant date, year and depth
+#               2. calculate the mean value for each month from May to October
+#               3. add 'NaN' to missing month
 def clean(df):
     # Change column name
-    target_name = df.columns.values[6]
-    if target_name == 'TEMPERATURE（Centrigrade）':
-        df.rename(columns={'DEPTH':'Depth'}, inplace=True)
+    df = PreprocessColumnNames(df)
 
-    # Processs df:
+    # Process sheet:
     # We will only process the date, depth, target item (CHLA, TEMPERATUR and Total P),
     # therefor, we drop irrelevant items, which are MIDAS, LAKE, Town(s) and STATION
     # With the reduced amount of data, the program will process data much faster
-    df = df.loc[:, ['Date', 'Depth', target_name]]
+    # The dropped columns will be added to the final sheet
+    df = df.loc[:, ['Date', 'Depth', df.columns.values[6]]]
 
-    # Select one depth by dropping irrelevant depths
-    df.drop(df[df.Depth != 7].index, inplace=True)
-    df = df.sort_values(by='Date')
-    df.reset_index(drop=True, inplace=True)
+    # Select one appropriate depth (7) by dropping irrelevant depths
+    df = selectValidDepth(df)
 
     # Select valid date
     #   a. between 1998-5-1 to 2013-10-31
-    #   b. exclude 2004
-    #   c. month between 5 to 10
+    #   b. exclude 2004 (there is no valid data for 'CHLA' in 2004)
+    #   c. between May to October (5-10)
+    df = selectValidDate(df)
+
+    # Calculate mean value for each month
+    # if two dates have the same year and month, their target values will be added up
+    # and a new piece of data will be created
+    # if there is no data for a month, a 'NaN' will be added
+    new_target_list = getMeanValueList(df)
+
+    # Get full year-month-day except 2004 since there is no useful data for 2004
+    empty_date_list = getFullDateList()
+
+    # create a new DataFrame and return it
+    return pd.DataFrame({'Date': empty_date_list, 'Depth': 7, df.columns.values[2]: new_target_list})
+
+
+# Change column name:
+#   if the target column name is 'DEPTH', then change it to 'Depth'
+def PreprocessColumnNames(df):
+    target_name = df.columns.values[6]
+    if target_name == 'TEMPERATURE（Centrigrade）':
+        df.rename(columns={'DEPTH':'Depth'}, inplace=True)
+    return df
+
+# Select one appropriate depth (7) by dropping irrelevant depths
+def selectValidDepth(df):
+    df.drop(df[df.Depth != 7].index, inplace=True)
+    df = df.sort_values(by='Date')
+    df.reset_index(drop=True, inplace=True)
+    return df
+
+# Select valid date
+#   a. between 1998-5-1 to 2013-10-31
+#   b. exclude 2004 (there is no valid data for 'CHLA' in 2004)
+#   c. between May to October (5-10)
+def selectValidDate(df):
     start = pd.to_datetime('1998-5-1')
     end = pd.to_datetime('2013-10-31')
     valid_month = [5, 6, 7, 8, 9, 10]
@@ -36,20 +71,21 @@ def clean(df):
             df.drop(index, inplace=True)
             continue
     df.reset_index(drop=True, inplace=True)
+    return df
 
-
-    # Calculate mean value for each month
-    # if dates have same year and month, there target value will be added up
-    # and a new piece of data will be created
-    # Get the first data
+# Calculate mean value for each month
+# if two dates have the same year and month, their target values will be added up
+# and a new piece of data will be created
+# if there is no data for a month, a 'NaN' will be added
+def getMeanValueList(df):
     Year = df.loc[0, 'Date'].year
     Month = df.loc[0, 'Date'].month
-    Target = df.loc[0, target_name]
+    Target = df.iloc[0, 2]
     Total = 1
     new_target_list = []
     # if the first a few months are missing,
     # add NaN to the list
-    for i in range (Month - 5):
+    for i in range(Month - 5):
         new_target_list.append(np.nan)
     # Iterate the dataframe
     for tup in df.itertuples():
@@ -91,19 +127,14 @@ def clean(df):
         if index == len(df) - 1:
             mean_value = round(((Target * 100) / 100.0) / Total, 5)
             new_target_list.append(mean_value)
+    return new_target_list
 
-    # Get full year-month-day except 2004 since there is no useful data for 2004
+# Get full year-month-day except 2004 since there is no useful data for 2004
+def getFullDateList():
     empty_date_list = []
     for year in range(1998, 2014):
         if year == 2004:
             continue
         for month in range(5, 11):
             empty_date_list.append(pd.to_datetime(str(year) + '-' + str(month) + '-1'))
-
-    # print(len(empty_date_list))
-    # print(len(new_target_list))
-
-    # create a new DataFrame
-    new_df = pd.DataFrame({'Date': empty_date_list, 'Depth': 7, target_name: new_target_list})
-
-    return new_df
+    return empty_date_list

@@ -1,4 +1,4 @@
-import pandas as pd
+
 
 def SpearmanRank(df):
     df2 = df.copy()
