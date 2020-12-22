@@ -24,14 +24,14 @@ def clean(df):
     #   c. between May to October (5-10)
     df = selectValidDate(df)
 
+    # Get full year-month-day except 2004 since there is no useful data for 2004
+    empty_date_list = getFullDateList()
+
     # Calculate mean value for each month
     # if two dates have the same year and month, their target values will be added up
     # and a new piece of data will be created
     # if there is no data for a month, a 'NaN' will be added
     new_target_list = getMeanValueList(df)
-
-    # Get full year-month-day except 2004 since there is no useful data for 2004
-    empty_date_list = getFullDateList()
 
     # create a new DataFrame and return it
     return pd.DataFrame({'Date': empty_date_list, 'Depth': 7, df.columns.values[2]: new_target_list})
