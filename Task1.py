@@ -36,6 +36,11 @@ complete_TOTALP_KNN = CompleteByKNN(cleaned_TOTALP)
 
 
 # concat three sheets to one sheet
+df_cleaned = pd.DataFrame({"MIDAS":5448, "Lake":"China Lake", "Town":"China, Vassalboro", "Station":1,
+                       "Date":complete_CHLA_KNN['Date'].dt.date, "Depth":7, "CHLA (mg/L)":cleaned_CHLA.iloc[:, 2],
+                  "TEMPERATURE (Centrigrade)":cleaned_TEMPERATURE.iloc[:, 2],
+                   "Total P (mg/L)":cleaned_TOTALP.iloc[:, 2]})
+
 df_Mean = pd.DataFrame({"MIDAS":5448, "Lake":"China Lake", "Town":"China, Vassalboro", "Station":1,
                        "Date":complete_CHLA_Mean['Date'].dt.date, "Depth":7, "CHLA (mg/L)":complete_CHLA_Mean.iloc[:, 6],
                   "TEMPERATURE (Centrigrade)":complete_TEMPERATURE_Mean.iloc[:, 6],
@@ -48,6 +53,6 @@ df_KNN = pd.DataFrame({"MIDAS":5448, "Lake":"China Lake", "Town":"China, Vassalb
 
 
 # save excel files to local
+df_cleaned.to_excel("China Lake_cleaned.xlsx", index=False)
 df_Mean.to_excel("China Lake_Mean.xlsx", index=False)
 df_KNN.to_excel("China Lake_KNN.xlsx", index=False)
-
