@@ -1,49 +1,89 @@
 import pandas as pd
 import numpy as np
+import math
 
-# clean sheets: 1. drop irrelevant date, year and depth
-#               2. calculate the mean value for each month from May to October
-#               3. add 'NaN' to missing month
-def clean(df):
-    # Change column name
+# Drop irrelevant data and merge 3 tables
+# After the merge, month mean value will be calculated
+# A cleaned and merged table will be retuned
+def merge3Tables(df1, df2, df3):
+    # drop irrelevant data
+    df1 = dropIrrelevant(df1)
+    df2 = dropIrrelevant(df2)
+    df3 = dropIrrelevant(df3)
+
+    # merge 3 tables
+    result = pd.merge(df1, df2, how='outer', on=['Date', 'Depth'])
+    result = pd.merge(result, df3, how='outer', on=['Date', 'Depth'])
+    result.sort_values(by='Date', inplace=True)
+    result.reset_index(drop=True, inplace=True)
+
+    # calculate month mean values
+    result = getMeanValueSheet(result)
+
+    # Create a full dataframe
+    df = pd.DataFrame({"MIDAS": 5448, "Lake": "China Lake", "Town": "China, Vassalboro", "Station": 1,
+                       "Date": result['Date'].dt.date, "Depth": 7, "CHLA (mg/L)": result.iloc[:, 1],
+                       "TEMPERATURE (Centrigrade)": result.iloc[:, 2],
+                       "Total P (mg/L)": result.iloc[:, 3]})
+    return df
+
+
+def getMeanValueSheet(df):
+    # create a new dataframe for function output
+    df_new = pd.DataFrame({"Date":[], "CHLA (mg/L)":[], "TEMPERATURE (Centrigrade)":[], "Total P (mg/L)":[]})
+    for year in range(1998, 2014):
+        if year == 2004:
+            # exclude year 2004 because there is no data for CHLA in 2004
+            continue
+        for month in range(5, 11):
+            # get data in year-month
+            temp_df = getYearMonthData(df, year, month)
+            if checkEmpty(temp_df):
+                # if all three values are NaN, add three NaN to the new dateframe
+                temp_row = pd.DataFrame({"Date":constructDate(year, month), "CHLA (mg/L)": np.nan, "TEMPERATURE (Centrigrade)":np.nan, "Total P (mg/L)":np.nan}, index=[1])
+                df_new = df_new.append(temp_row, ignore_index=True)
+            elif checkComplete(temp_df):
+                # if there are three values are not NaN, only calculate each mean value to that month and drop incomplete data
+                # get complete data
+                df_complete = getComplete(temp_df)
+                # get mean value for each variable
+                chla_mean = calculateMean(df_complete, 0)
+                temperature_mean = calculateMean(df_complete, 1)
+                totalp_mean = calculateMean(df_complete, 2)
+                # add mean values to the new dataframe
+                temp_row = pd.DataFrame({"Date":constructDate(year, month), "CHLA (mg/L)": chla_mean, "TEMPERATURE (Centrigrade)":temperature_mean, "Total P (mg/L)":totalp_mean}, index=[1])
+                df_new = df_new.append(temp_row, ignore_index=True)
+            else:
+                # if all pieces of data are incomplete, calculate their mean values
+                chla_mean = calculateMean(temp_df, 2)
+                temperature_mean = calculateMean(temp_df, 3)
+                totalp_mean = calculateMean(temp_df, 4)
+                # add mean values to the new dataframe
+                temp_row = pd.DataFrame({"Date": constructDate(year, month), "CHLA (mg/L)": chla_mean,
+                                         "TEMPERATURE (Centrigrade)": temperature_mean, "Total P (mg/L)": totalp_mean},
+                                        index=[1])
+                df_new = df_new.append(temp_row, ignore_index=True)
+    return df_new
+
+
+def dropIrrelevant(df):
     df = PreprocessColumnNames(df)
-
-    # Process sheet:
-    # We will only process the date, depth, target item (CHLA, TEMPERATUR and Total P),
-    # therefor, we drop irrelevant items, which are MIDAS, LAKE, Town(s) and STATION
-    # With the reduced amount of data, the program will process data much faster
-    # The dropped columns will be added to the final sheet
-    df = df.loc[:, ['Date', 'Depth', df.columns.values[6]]]
-
-    # Select one appropriate depth (7) by dropping irrelevant depths
     df = selectValidDepth(df)
-
-    # Select valid date
-    #   a. between 1998-5-1 to 2013-10-31
-    #   b. exclude 2004 (there is no valid data for 'CHLA' in 2004)
-    #   c. between May to October (5-10)
+    df = selectValidStation(df)
     df = selectValidDate(df)
-
-    # Get full year-month-day except 2004 since there is no useful data for 2004
-    empty_date_list = getFullDateList()
-
-    # Calculate mean value for each month
-    # if two dates have the same year and month, their target values will be added up
-    # and a new piece of data will be created
-    # if there is no data for a month, a 'NaN' will be added
-    new_target_list = getMeanValueList(df)
-
-    # create a new DataFrame and return it
-    return pd.DataFrame({'Date': empty_date_list, 'Depth': 7, df.columns.values[2]: new_target_list})
+    df = df.loc[:, ['Date', 'Depth', df.columns.values[6]]]
+    return df
 
 
 # Change column name:
 #   if the target column name is 'DEPTH', then change it to 'Depth'
 def PreprocessColumnNames(df):
-    target_name = df.columns.values[6]
-    if target_name == 'TEMPERATURE（Centrigrade）':
+    if df.columns.values[6] == 'TEMPERATURE（Centrigrade）':
         df.rename(columns={'DEPTH':'Depth'}, inplace=True)
+    if df.columns.values[3] == 'STATION':
+        df.rename(columns={'STATION':'Station'}, inplace=True)
     return df
+
 
 # Select one appropriate depth (7) by dropping irrelevant depths
 def selectValidDepth(df):
@@ -51,6 +91,15 @@ def selectValidDepth(df):
     df = df.sort_values(by='Date')
     df.reset_index(drop=True, inplace=True)
     return df
+
+
+# Select one appropriate station (1) by dropping irrelevant stations
+def selectValidStation(df):
+    df.drop(df[df.Station != 1].index, inplace=True)
+    df = df.sort_values(by='Date')
+    df.reset_index(drop=True, inplace=True)
+    return df
+
 
 # Select valid date
 #   a. between 1998-5-1 to 2013-10-31
@@ -73,68 +122,61 @@ def selectValidDate(df):
     df.reset_index(drop=True, inplace=True)
     return df
 
-# Calculate mean value for each month
-# if two dates have the same year and month, their target values will be added up
-# and a new piece of data will be created
-# if there is no data for a month, a 'NaN' will be added
-def getMeanValueList(df):
-    Year = df.loc[0, 'Date'].year
-    Month = df.loc[0, 'Date'].month
-    Target = df.iloc[0, 2]
-    Total = 1
-    new_target_list = []
-    # if the first a few months are missing,
-    # add NaN to the list
-    for i in range(Month - 5):
-        new_target_list.append(np.nan)
-    # Iterate the dataframe
-    for tup in df.itertuples():
-        index = tup[0]
-        year = tup[1].year
-        month = tup[1].month
-        target = tup[3]
 
-        # if it is the first data, continue
-        if index == 0:
-            continue
+# Get data in year-month
+def getYearMonthData(df, year, month):
+    df2 = df.copy()
+    for index, date in enumerate(df2.Date):
+        if (date.year != year) | (date.month != month):
+            df2.drop(index, inplace=True)
+    df2.reset_index(drop=True, inplace=True)
+    return df2
 
-        # if two piece of data have same year and month
-        if (Year == year) & (Month == month):
-            Target += target
-            Total += 1
-            # if the current data is the last piece of data, calculate the mean value and append it to the list
-        else:
-            # calculate the previous mean value first
-            mean_value = round(((Target * 100) / 100.0) / Total, 5)
-            new_target_list.append(mean_value)
 
-            # Add empty data
-            month_delta = month - Month
-            if Year == year:
-                if month_delta != 1:
-                    for i in range(month_delta - 1):
-                        new_target_list.append(np.nan)
-            else:
-                # different year
-                if (month_delta + 5) != 0:
-                    for i in range(month_delta + 5):
-                        new_target_list.append(np.nan)
-            # new piece of data
-            Year = year
-            Month = month
-            Target = target
-            Total = 1
-        if index == len(df) - 1:
-            mean_value = round(((Target * 100) / 100.0) / Total, 5)
-            new_target_list.append(mean_value)
-    return new_target_list
+# Construct a '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
+def constructDate(year, month):
+    date_str = str(year) + '-' + str(month)
+    return pd.to_datetime(date_str)
 
-# Get full year-month-day except 2004 since there is no useful data for 2004
-def getFullDateList():
-    empty_date_list = []
-    for year in range(1998, 2014):
-        if year == 2004:
-            continue
-        for month in range(5, 11):
-            empty_date_list.append(pd.to_datetime(str(year) + '-' + str(month) + '-1'))
-    return empty_date_list
+
+# Check if there is any complete data in the dataframe
+def checkComplete(df):
+    isComplete = False
+    for i in range(len(df.index)):
+        if (math.isnan(df.iloc[i, 2]) == False) & (math.isnan(df.iloc[i, 3]) == False) & (math.isnan(df.iloc[i, 4]) == False):
+            isComplete = True
+    return isComplete
+
+
+# Return complete data
+def getComplete(df):
+    chla_list = []
+    temperature_list = []
+    totalp_list =[]
+    for i in range(len(df.index)):
+        if (math.isnan(df.iloc[i, 2]) == False) & (math.isnan(df.iloc[i, 3]) == False) & (math.isnan(df.iloc[i, 4]) == False):
+            chla_list.append(df.iloc[i, 2])
+            temperature_list.append(df.iloc[i, 3])
+            totalp_list.append(df.iloc[i, 4])
+    df_complete = pd.DataFrame({"CHLA (mg/L)":chla_list, "TEMPERATURE (Centrigrade)":temperature_list, "Total P (mg/L)":totalp_list})
+    return df_complete
+
+
+# Check if the dataframe is empty
+def checkEmpty(df):
+    return len(df.index) == 0
+
+
+# Calculate mean value for a row
+def calculateMean(df, row_number):
+    list = df.iloc[:, row_number].tolist()
+    total = 0
+    count = 0
+    for i in list:
+        if math.isnan(i) == False:
+            total += i
+            count += 1
+    if count == 0:
+        return np.nan
+    else:
+        return total / count

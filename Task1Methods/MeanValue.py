@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import math
+from utility import constructDate
 
 def CompleteByMean(df):
     df2 = df.copy()
@@ -57,8 +58,4 @@ def getMonthValue(df, date):
     return result
 
 
-# Construct a '<class 'pandas._libs.tslibs.timestamps.Timestamp'>'
-def constructDate(year, month):
-    date_str = str(year) + '-' + str(month)
-    return pd.to_datetime(date_str)
 
