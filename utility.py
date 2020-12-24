@@ -28,6 +28,19 @@ def merge3Tables(df1, df2, df3):
     return df
 
 
+# Process column names: 'DEPTH' -> 'Depth'; 'STATION' -> 'Station'
+# Select valid depth: 7
+# Select valid station: 1
+# Select valid data: May to October from 1998 to 2013, excluding 2004
+def dropIrrelevant(df):
+    df = PreprocessColumnNames(df)
+    df = selectValidDepth(df)
+    df = selectValidStation(df)
+    df = selectValidDate(df)
+    df = df.loc[:, ['Date', 'Depth', df.columns.values[6]]]
+    return df
+
+
 def getMeanValueSheet(df):
     # create a new dataframe for function output
     df_new = pd.DataFrame({"Date":[], "CHLA (mg/L)":[], "TEMPERATURE (Centrigrade)":[], "Total P (mg/L)":[]})
@@ -64,19 +77,6 @@ def getMeanValueSheet(df):
                                         index=[1])
                 df_new = df_new.append(temp_row, ignore_index=True)
     return df_new
-
-
-# Process column names: 'DEPTH' -> 'Depth'; 'STATION' -> 'Station'
-# Select valid depth: 7
-# Select valid station: 1
-# Select valid data: May to October from 1998 to 2013, excluding 2004
-def dropIrrelevant(df):
-    df = PreprocessColumnNames(df)
-    df = selectValidDepth(df)
-    df = selectValidStation(df)
-    df = selectValidDate(df)
-    df = df.loc[:, ['Date', 'Depth', df.columns.values[6]]]
-    return df
 
 
 # Change column name:
