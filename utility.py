@@ -4,7 +4,7 @@ import math
 
 # Drop irrelevant data and merge 3 tables
 # After the merge, month mean value will be calculated
-# A cleaned and merged table will be retuned
+# A cleaned and merged table will be returned
 def merge3Tables(df1, df2, df3):
     # drop irrelevant data
     df1 = dropIrrelevant(df1)
@@ -17,10 +17,10 @@ def merge3Tables(df1, df2, df3):
     result.sort_values(by='Date', inplace=True)
     result.reset_index(drop=True, inplace=True)
 
-    # calculate month mean values
+    # calculate month mean values and return the table
     result = getMeanValueSheet(result)
 
-    # Create a full dataframe
+    # create a full dataframe
     df = pd.DataFrame({"MIDAS": 5448, "Lake": "China Lake", "Town": "China, Vassalboro", "Station": 1,
                        "Date": result['Date'].dt.date, "Depth": 7, "CHLA (mg/L)": result.iloc[:, 1],
                        "TEMPERATURE (Centrigrade)": result.iloc[:, 2],
@@ -66,6 +66,10 @@ def getMeanValueSheet(df):
     return df_new
 
 
+# Process column names: 'DEPTH' -> 'Depth'; 'STATION' -> 'Station'
+# Select valid depth: 7
+# Select valid station: 1
+# Select valid data: May to October from 1998 to 2013, excluding 2004
 def dropIrrelevant(df):
     df = PreprocessColumnNames(df)
     df = selectValidDepth(df)
@@ -77,6 +81,7 @@ def dropIrrelevant(df):
 
 # Change column name:
 #   if the target column name is 'DEPTH', then change it to 'Depth'
+#   if the target column name is 'STATION', then change it to 'Station'
 def PreprocessColumnNames(df):
     if df.columns.values[6] == 'TEMPERATURE（Centrigrade）':
         df.rename(columns={'DEPTH':'Depth'}, inplace=True)
@@ -127,6 +132,7 @@ def selectValidDate(df):
 def getYearMonthData(df, year, month):
     df2 = df.copy()
     for index, date in enumerate(df2.Date):
+        # only leave the data that has the same year and month with 'year' and 'month', and drop the rest
         if (date.year != year) | (date.month != month):
             df2.drop(index, inplace=True)
     df2.reset_index(drop=True, inplace=True)
@@ -143,8 +149,10 @@ def constructDate(year, month):
 def checkComplete(df):
     isComplete = False
     for i in range(len(df.index)):
+        # if there are three non-Nan value on the same day, isComplete = True and return it
         if (math.isnan(df.iloc[i, 2]) == False) & (math.isnan(df.iloc[i, 3]) == False) & (math.isnan(df.iloc[i, 4]) == False):
             isComplete = True
+            break
     return isComplete
 
 
