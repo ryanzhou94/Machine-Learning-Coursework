@@ -26,7 +26,7 @@ df_Biweight_corr = Biweight(df)
 
 # create a dataframe of differet methods for correlation
 df_corr = pd.DataFrame({'Pearson': df_pearson_corr.iloc[:, 0],
-                        'Spearman Ranlk' : df_spearman_corr.iloc[:, 0],
+                        'Spearman Rank' : df_spearman_corr.iloc[:, 0],
                         'Kendall Rank' : df_kendall_corr.iloc[:, 0],
                         'Distance' : df_distance_corr.iloc[:, 0],
                         'Biweight' : df_Biweight_corr.iloc[:, 0]})
