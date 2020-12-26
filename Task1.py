@@ -53,6 +53,11 @@ df_KNN = pd.DataFrame({"MIDAS":5448, "Lake":"China Lake", "Town":"China, Vassalb
                    "Total P (mg/L)":complete_TOTALP_KNN.iloc[:, 6]})
 
 # save excel files to local
-df_cleaned.to_excel("China Lake_cleaned.xlsx", index=False)
-df_Mean.to_excel("China Lake_Mean.xlsx", index=False)
-df_KNN.to_excel("China Lake_KNN.xlsx", index=False)
+writer = pd.ExcelWriter('China Lake Complete.xlsx')
+df_Mean.to_excel(writer, 'Mean Value', index=False)
+df_KNN.to_excel(writer, 'KNN', index=False)
+writer.save()
+writer.close()
+
+# save cleaned excel for analysis (Task3)
+df_cleaned.to_excel("China Lake Cleaned.xlsx", index=False)

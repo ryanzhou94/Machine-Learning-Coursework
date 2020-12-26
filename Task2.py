@@ -10,11 +10,12 @@ pd.set_option('display.max_rows',1000)
 pd.set_option('display.max_columns',1000)
 
 # Open the xlsx file
-file_path_Mean = 'China Lake_Mean.xlsx'
-file_path_KNN = 'China Lake_KNN.xlsx'
+file_path = 'China Lake Complete.xlsx'
 
 # Open the xlsx file by using 'openpyxl'
-df = pd.read_excel(file_path_KNN, engine='openpyxl')
+# There are two complete sheets in the excel file, we will use KNN sheet for Task2
+sheets = pd.read_excel(file_path, engine='openpyxl', sheet_name=[0, 1])
+df = sheets[1]
 df = df.loc[:, ['CHLA (mg/L)', 'TEMPERATURE (Centrigrade)', 'Total P (mg/L)']]
 
 # get correlation dataframe
